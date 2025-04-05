@@ -3,8 +3,8 @@ resource "aws_apprunner_service" "backend" {
   source_configuration {
     auto_deployments_enabled = true
     image_repository {
-      image_identifier      = "public.ecr.aws/nginx:latest" # Replace with your ECR
-      image_repository_type = "ECR" # Must be "ECR" or "ECR_PUBLIC"
+      image_identifier      = "public.ecr.aws/aws-containers/nginx:latest" # ✅ Fixed
+      image_repository_type = "ECR_PUBLIC" # Must be "ECR" or "ECR_PUBLIC"
       image_configuration {
         port = "3000"
       }
