@@ -14,11 +14,11 @@ variable "app_image" {
   default     = "public.ecr.aws/aws-containers/nginx:latest"
 }
 
-variable "website_files_path" {
-  description = "Path to website files for upload"
-  type        = string
-  default     = "./dist"
-}
+#variable "website_files_path" {
+# description = "Path to website files for upload"
+# type        = string
+# default     = "./dist"
+#}
 variable "website_files_path" {
   description = "Path to website files (must contain index.html)"
   type        = string
