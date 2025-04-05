@@ -35,7 +35,7 @@ resource "aws_apprunner_service" "backend_service" {
 
   source_configuration {
     authentication_configuration {
-      connection_arn = aws_apprunner_connection.github_connection.arn
+      connection_arn = "arn:aws:apprunner:us-east-1:135808921133:connection/github-monorepo-connection/d9696a6262774e5a8fdb36bd36dccf3f"
     }
 
     auto_deployments_enabled = true
