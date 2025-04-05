@@ -1,8 +1,4 @@
 version: 1.0
-build:
-  commands:
-    build:
-      - npm install
 run:
   runtime: NODEJS_18
   command: npm start
