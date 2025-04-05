@@ -1,3 +1,14 @@
+variable "customer_name" {
+  type        = string
+  description = "Name of the customer"
+}
+
+variable "app_image" {
+  type        = string
+  description = "Docker image (not used if deploying from source)"
+}
+
+
 terraform {
   required_providers {
     aws = {
@@ -36,14 +47,9 @@ resource "aws_apprunner_service" "backend_service" {
         value = "master"
       }
 
-      code_configuration {
-        configuration_source = "API"
-
         code_configuration {
-        configuration_source = "REPOSITORY"
-        # Now App Runner will look for apprunner.yaml inside the repo
-      }
-      }
+      configuration_source = "REPOSITORY"
+    }
     }
   }
 
