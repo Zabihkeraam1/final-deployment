@@ -32,7 +32,7 @@ jobs:
 
       - name: Import GitHub Connection into Terraform
         run: |
-          cd ../../terraform/
+          cd terraform/
           terraform import aws_apprunner_connection.github_connection arn:aws:apprunner:us-east-1:135808921133:connection/github-monorepo-connection/d9696a6262774e5a8fdb36bd36dccf3f
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
