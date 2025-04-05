@@ -37,7 +37,7 @@ resource "aws_iam_role" "apprunner_role" {
 }
 
 resource "aws_apprunner_service" "backend_service" {
-  service_name = "monorepo-backend-service"
+  service_name = "new-monorepo-backend-service"
 
   source_configuration {
     authentication_configuration {
@@ -57,8 +57,8 @@ resource "aws_apprunner_service" "backend_service" {
         configuration_source = "API"
         code_configuration_values {
           runtime        = "NODEJS_18"
-          build_command  = "cd Backend && npm install --production"
-          start_command  = "cd Backend && node server.js"
+          build_command = "npm --prefix ./Backend install --production"
+          start_command = "node ./Backend/server.js" 
           port           = 8080
         }
       }
