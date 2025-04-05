@@ -1,3 +1,41 @@
+variable "customer_name" {
+  type        = string
+  description = "Name of the customer"
+}
+
+variable "app_image" {
+  type        = string
+  description = "Docker image (not used if deploying from source)"
+}
+
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+  required_version = ">= 1.0"
+}
+
+provider "aws" {
+  region = "us-east-1"
+}
+
+resource "aws_iam_role" "apprunner_role" {
+  name = "apprunner-service-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [{
+      Action = "sts:AssumeRole",
+      Effect = "Allow",
+      Principal = {
+        Service = "build.apprunner.amazonaws.com"
+      }
+    }]
+  })
+}
+
 resource "aws_apprunner_service" "backend_service" {
   service_name = "monorepo-backend-service"
 
@@ -8,24 +46,41 @@ resource "aws_apprunner_service" "backend_service" {
 
     auto_deployments_enabled = true
 
-    image_repository {
-      image_repository_type = "ECR_PUBLIC"
-      image_identifier      = "public.ecr.aws/aws-apprunner/example/nodejs18:latest" # Base image
-    }
+    code_repository {
+      repository_url = "https://github.com/Zabihkeraam1/final-deployment.git"
+      source_code_version {
+        type  = "BRANCH"
+        value = "master"
+      }
 
-    # Remove code_repository block
+      code_configuration {
+        configuration_source = "API"
+        code_configuration_values {
+          runtime        = "NODEJS_18"
+          build_command  = "cd Backend && npm install --production"
+          start_command  = "cd Backend && node server.js"
+          port           = 8080
+        }
+      }
+    }
   }
 
   instance_configuration {
-    cpu    = "1024"
-    memory = "2048"
+    instance_role_arn = aws_iam_role.apprunner_role.arn
+    cpu               = "1024"
+    memory            = "2048"
+  }
+
+  tags = {
+    Environment = "production"
+    App         = "backend"
   }
 
   health_check_configuration {
     protocol            = "HTTP"
     path                = "/health"
-    interval            = 25
-    timeout             = 20
+    interval            = 30
+    timeout             = 25
     healthy_threshold   = 3
     unhealthy_threshold = 5
   }
