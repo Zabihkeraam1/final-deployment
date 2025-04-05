@@ -1,27 +1,3 @@
-variable "customer_name" {
-  type        = string
-  description = "Name of the customer"
-}
-
-variable "app_image" {
-  type        = string
-  description = "Docker image (not used if deploying from source)"
-}
-
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-  required_version = ">= 1.0"
-}
-
-provider "aws" {
-  region = "us-east-1"
-}
-
 resource "aws_apprunner_service" "backend_service" {
   service_name = "monorepo-backend-service"
 
@@ -32,23 +8,12 @@ resource "aws_apprunner_service" "backend_service" {
 
     auto_deployments_enabled = true
 
-    code_repository {
-      repository_url = "https://github.com/Zabihkeraam1/final-deployment.git"
-      source_code_version {
-        type  = "BRANCH"
-        value = "master"
-      }
-
-      code_configuration {
-        configuration_source = "API"
-        code_configuration_values {
-          runtime        = "NODEJS_18"
-          build_command  = "cd Backend && npm install --production" # Fixed indentation
-          start_command  = "cd Backend && node server.js"          # Fixed case sensitivity
-          port           = "8080"
-        }
-      }
+    image_repository {
+      image_repository_type = "ECR_PUBLIC"
+      image_identifier      = "public.ecr.aws/aws-apprunner/example/nodejs18:latest" # Base image
     }
+
+    # Remove code_repository block
   }
 
   instance_configuration {
@@ -56,17 +21,12 @@ resource "aws_apprunner_service" "backend_service" {
     memory = "2048"
   }
 
-  tags = {
-    Environment = "production"
-    App         = "backend"
-  }
-
   health_check_configuration {
     protocol            = "HTTP"
     path                = "/health"
-    interval            = 10
-    timeout             = 5
-    healthy_threshold   = 2
+    interval            = 25
+    timeout             = 20
+    healthy_threshold   = 3
     unhealthy_threshold = 5
   }
 }
