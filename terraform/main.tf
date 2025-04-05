@@ -1,96 +1,145 @@
-resource "aws_apprunner_service" "backend" {
-  service_name = "my-project-backend"
-  source_configuration {
-    auto_deployments_enabled = true
-    image_repository {
-      image_identifier      = "public.ecr.aws/aws-containers/nginx:latest" # ✅ Fixed
-      image_repository_type = "ECR_PUBLIC" # Must be "ECR" or "ECR_PUBLIC"
-      image_configuration {
-        port = "3000"
-      }
-    }
+variable "customer_name" {
+  description = "Unique identifier for the customer (lowercase alphanumeric only)"
+  type        = string
+
+  validation {
+    condition     = can(regex("^[a-z0-9-]+$", var.customer_name))
+    error_message = "Customer name must be lowercase alphanumeric with hyphens only."
   }
 }
 
+variable "app_image" {
+  description = "Container image URI (ECR Public or Private)"
+  type        = string
+  default     = "public.ecr.aws/aws-containers/nginx:latest"
+}
+
+variable "website_files_path" {
+  description = "Path to website files for upload"
+  type        = string
+  default     = "./dist"
+}
+
+locals {
+  normalized_name   = lower(replace(var.customer_name, "/[^a-zA-Z0-9-]/", "-"))
+  s3_bucket_name    = "website-${local.normalized_name}-${random_id.suffix.hex}"
+  apprunner_name    = "app-${local.normalized_name}"
+  cloudfront_comment = "CDN for ${local.normalized_name}"
+}
+
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
+# AWS Provider (using environment variables for credentials)
 provider "aws" {
   region = "us-east-1"
-  access_key = var.AWS_ACCESS_KEY_ID
-  secret_key = var.AWS_SECRET_ACCESS_KEY
-
 }
 
-# Create S3 Bucket for Static Files
-resource "aws_s3_bucket" "frontend_bucket" {
-  bucket = "frontend-bucket-webserver1234"
-  force_destroy = true
+# App Runner Configuration
+resource "aws_apprunner_service" "backend" {
+  service_name = local.apprunner_name
+  
+  source_configuration {
+    auto_deployments_enabled = false
+    
+    image_repository {
+      image_identifier      = var.app_image
+      image_repository_type = startswith(var.app_image, "public.ecr.aws") ? "ECR_PUBLIC" : "ECR"
+      
+      image_configuration {
+        port = "3000"
+        runtime_environment_variables = {
+          APP_ENV = "production"
+        }
+      }
+    }
+  }
+
+  instance_configuration {
+    cpu    = "1 vCPU"
+    memory = "2 GB"
+  }
+
+  tags = {
+    Customer = var.customer_name
+    ManagedBy = "terraform"
+  }
 }
 
-# Modern versioning configuration
-resource "aws_s3_bucket_versioning" "frontend_versioning" {
-  bucket = aws_s3_bucket.frontend_bucket.id
+# S3 Bucket for Website Files
+resource "aws_s3_bucket" "frontend" {
+  bucket        = local.s3_bucket_name
+  force_destroy = true  # Allows easy cleanup for demo purposes
+
+  tags = {
+    Purpose    = "Website Hosting"
+    Customer   = var.customer_name
+    ManagedBy  = "terraform"
+  }
+}
+
+resource "aws_s3_bucket_versioning" "versioning" {
+  bucket = aws_s3_bucket.frontend.id
   versioning_configuration {
     status = "Enabled"
   }
 }
 
-# Modern website configuration
-resource "aws_s3_bucket_website_configuration" "frontend_website" {
-  bucket = aws_s3_bucket.frontend_bucket.id
+resource "aws_s3_bucket_website_configuration" "website" {
+  bucket = aws_s3_bucket.frontend.id
 
   index_document {
     suffix = "index.html"
   }
 
   error_document {
-    key = "index.html"
+    key = "error.html"
   }
 }
 
-# Modern ACL configuration (private by default)
-resource "aws_s3_bucket_ownership_controls" "frontend_ownership" {
-  bucket = aws_s3_bucket.frontend_bucket.id
+resource "aws_s3_bucket_ownership_controls" "ownership" {
+  bucket = aws_s3_bucket.frontend.id
   rule {
     object_ownership = "BucketOwnerEnforced"
   }
 }
 
-# Block public access
 resource "aws_s3_bucket_public_access_block" "block_public" {
-  bucket = aws_s3_bucket.frontend_bucket.id
+  bucket = aws_s3_bucket.frontend.id
+
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
 
-# CloudFront Origin Access Identity (OAI)
+# CloudFront Distribution
 resource "aws_cloudfront_origin_access_identity" "oai" {
-  comment = "OAI for ${aws_s3_bucket.frontend_bucket.bucket}"
+  comment = local.cloudfront_comment
 }
 
-# S3 Bucket Policy (Allow CloudFront Only)
-resource "aws_s3_bucket_policy" "bucket_policy" {
-  bucket = aws_s3_bucket.frontend_bucket.id
+resource "aws_s3_bucket_policy" "cdn_access" {
+  bucket = aws_s3_bucket.frontend.id
   policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
       {
         Effect    = "Allow",
         Principal = {
-          AWS = "arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${aws_cloudfront_origin_access_identity.oai.id}"
+          AWS = aws_cloudfront_origin_access_identity.oai.iam_arn
         },
         Action    = "s3:GetObject",
-        Resource  = "${aws_s3_bucket.frontend_bucket.arn}/*"
+        Resource  = "${aws_s3_bucket.frontend.arn}/*"
       }
     ]
   })
 }
 
-# CloudFront Distribution
 resource "aws_cloudfront_distribution" "cdn" {
   origin {
-    domain_name = aws_s3_bucket.frontend_bucket.bucket_regional_domain_name
-    origin_id   = "S3-${aws_s3_bucket.frontend_bucket.bucket}"
+    domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
+    origin_id   = "S3-${aws_s3_bucket.frontend.id}"
 
     s3_origin_config {
       origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
@@ -98,12 +147,14 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 
   enabled             = true
+  is_ipv6_enabled     = true
   default_root_object = "index.html"
+  comment             = local.cloudfront_comment
 
   default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD"]
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
     cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "S3-${aws_s3_bucket.frontend_bucket.bucket}"
+    target_origin_id = "S3-${aws_s3_bucket.frontend.id}"
 
     forwarded_values {
       query_string = false
@@ -116,7 +167,10 @@ resource "aws_cloudfront_distribution" "cdn" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+    compress               = true
   }
+
+  price_class = "PriceClass_100"  # Use only North America and Europe for cost savings
 
   restrictions {
     geo_restriction {
@@ -127,13 +181,40 @@ resource "aws_cloudfront_distribution" "cdn" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+
+  tags = {
+    Customer   = var.customer_name
+    ManagedBy  = "terraform"
+  }
 }
 
-# Output CloudFront URL and Distribution ID
-output "cloudfront_url" {
-  value = aws_cloudfront_distribution.cdn.domain_name
+# Website Deployment Resource
+resource "null_resource" "upload_website" {
+  triggers = {
+    always_run = timestamp()  # Forces upload on every apply
+  }
+
+  provisioner "local-exec" {
+    command = "aws s3 sync ${var.website_files_path} s3://${aws_s3_bucket.frontend.id} --delete"
+  }
+
+  depends_on = [
+    aws_s3_bucket_policy.cdn_access
+  ]
 }
 
-output "cloudfront_distribution_id" {
-  value = aws_cloudfront_distribution.cdn.id
+# Outputs
+output "website_url" {
+  value       = "https://${aws_cloudfront_distribution.cdn.domain_name}"
+  description = "The URL of the deployed website"
+}
+
+output "apprunner_url" {
+  value       = aws_apprunner_service.backend.service_url
+  description = "The URL of the App Runner service"
+}
+
+output "s3_bucket_name" {
+  value       = aws_s3_bucket.frontend.id
+  description = "Name of the S3 bucket hosting website files"
 }
