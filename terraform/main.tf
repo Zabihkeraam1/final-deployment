@@ -25,7 +25,7 @@ provider "aws" {
 
 # 1️⃣ GitHub Connection (fully managed by Terraform)
 resource "aws_apprunner_connection" "github_connection" {
-  connection_name = aws_apprunner_connection.github_connection.arn
+  connection_name = "github-monorepo-connection"
   provider_type   = "GITHUB"
 }
 
@@ -35,7 +35,7 @@ resource "aws_apprunner_service" "backend_service" {
 
   source_configuration {
     authentication_configuration {
-      connection_arn = ""github-monorepo-connection""
+      connection_arn = aws_apprunner_connection.github_connection.arn
     }
 
     auto_deployments_enabled = true
