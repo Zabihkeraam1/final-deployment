@@ -45,8 +45,8 @@ resource "aws_apprunner_service" "backend_service" {
           configuration_source = "API"  # Use "API" if using apprunner.yaml
         code_configuration_values {
           runtime = "NODEJS_18"       # Node.js 18
-          build_command = "npm install"
-          start_command = "npm start"
+          build_command = "cd backed && npm install"
+          start_command = "cd backend && npm start"
           port = "8080"               # Your app's port
         }
     }
