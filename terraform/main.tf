@@ -62,4 +62,12 @@ resource "aws_apprunner_service" "backend_service" {
     Environment = "production"
     App         = "backend"
   }
+  health_check_configuration {
+    protocol           = "HTTP"
+    path               = "/health"
+    interval           = 10
+    timeout            = 5
+    healthy_threshold  = 2
+    unhealthy_threshold = 5
+  }
 }
