@@ -22,20 +22,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_iam_role" "apprunner_role" {
-  name = "apprunner-service-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Action = "sts:AssumeRole",
-      Effect = "Allow",
-      Principal = {
-        Service = "build.apprunner.amazonaws.com"
-      }
-    }]
-  })
-}
-
 resource "aws_apprunner_service" "backend_service" {
   service_name = "new-monorepo-backend-service"
 
@@ -66,7 +52,6 @@ resource "aws_apprunner_service" "backend_service" {
   }
 
   instance_configuration {
-    instance_role_arn = aws_iam_role.apprunner_role.arn
     cpu               = "1024"
     memory            = "2048"
   }
