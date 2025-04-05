@@ -19,11 +19,16 @@ variable "website_files_path" {
   type        = string
   default     = "./dist"
 }
+variable "website_files_path" {
+  description = "Path to website files (must contain index.html)"
+  type        = string
+  default     = "./website" # Changed default to more common directory name
+}
 
 locals {
   normalized_name   = lower(replace(var.customer_name, "/[^a-zA-Z0-9-]/", "-"))
   s3_bucket_name    = "website-${local.normalized_name}-${random_id.suffix.hex}"
-  apprunner_name    = "app-${local.normalized_name}"
+  apprunner_name = "app-${local.normalized_name}-${random_id.suffix.hex}"
   cloudfront_comment = "CDN for ${local.normalized_name}"
 }
 
@@ -38,7 +43,7 @@ provider "aws" {
 
 # App Runner Configuration
 resource "aws_apprunner_service" "backend" {
-  service_name = local.apprunner_name
+  service_name = "${local.apprunner_name}-${random_id.suffix.hex}"
   
   source_configuration {
     auto_deployments_enabled = false
@@ -190,12 +195,16 @@ resource "aws_cloudfront_distribution" "cdn" {
 
 # Website Deployment Resource
 resource "null_resource" "upload_website" {
-  triggers = {
-    always_run = timestamp()  # Forces upload on every apply
-  }
+  count = fileexists("${var.website_files_path}/index.html") ? 1 : 0 # Only create if index.html exists
 
   provisioner "local-exec" {
-    command = "aws s3 sync ${var.website_files_path} s3://${aws_s3_bucket.frontend.id} --delete"
+    command = <<-EOT
+      echo "Uploading website files from ${var.website_files_path}"
+      aws s3 sync ${var.website_files_path} s3://${aws_s3_bucket.frontend.id} \
+        --exclude ".git/*" \
+        --exclude ".DS_Store" \
+        --delete
+    EOT
   }
 
   depends_on = [
