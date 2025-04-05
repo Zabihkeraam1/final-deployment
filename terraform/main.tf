@@ -8,7 +8,6 @@ variable "app_image" {
   description = "Docker image (not used if deploying from source)"
 }
 
-
 terraform {
   required_providers {
     aws = {
@@ -20,10 +19,9 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1" # Change to your region
+  region = "us-east-1"
 }
 
-# 1️⃣ App Runner Service (backend folder in monorepo)
 resource "aws_apprunner_service" "backend_service" {
   service_name = "monorepo-backend-service"
 
@@ -41,33 +39,34 @@ resource "aws_apprunner_service" "backend_service" {
         value = "master"
       }
 
-        code_configuration {
-          configuration_source = "API"  # Use "API" if using apprunner.yaml
+      code_configuration {
+        configuration_source = "API"
         code_configuration_values {
-          runtime = "NODEJS_18"       # Node.js 18
-          build_command = "cd Backend && npm install"
-          start_command = "cd Backend && node server.js"
-          port = "8080"               # Your app's port
+          runtime        = "NODEJS_18"
+          build_command  = "cd Backend && npm install --production" # Fixed indentation
+          start_command  = "cd Backend && node server.js"          # Fixed case sensitivity
+          port           = "8080"
         }
-    }
+      }
     }
   }
 
   instance_configuration {
-    cpu    = "1024"   # 1 vCPU
-    memory = "2048"   # 2 GB RAM
+    cpu    = "1024"
+    memory = "2048"
   }
 
   tags = {
     Environment = "production"
     App         = "backend"
   }
+
   health_check_configuration {
-    protocol           = "HTTP"
-    path               = "/health"
-    interval           = 10
-    timeout            = 5
-    healthy_threshold  = 2
+    protocol            = "HTTP"
+    path                = "/health"
+    interval            = 10
+    timeout             = 5
+    healthy_threshold   = 2
     unhealthy_threshold = 5
   }
 }
