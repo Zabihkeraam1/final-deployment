@@ -46,7 +46,7 @@ resource "aws_apprunner_service" "backend_service" {
         code_configuration_values {
           runtime = "NODEJS_18"       # Node.js 18
           build_command = "cd Backend && npm install"
-          start_command = "cd Backend && npm start"
+          start_command = "cd Backend && node server.js"
           port = "8080"               # Your app's port
         }
     }
