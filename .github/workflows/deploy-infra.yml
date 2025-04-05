@@ -29,6 +29,14 @@ jobs:
         env:
           TF_VAR_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           TF_VAR_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Import GitHub Connection into Terraform
+        run: |
+          terraform import aws_apprunner_connection.github_connection arn:aws:apprunner:us-east-1:135808921133:connection/github-monorepo-connection/d9696a6262774e5a8fdb36bd36dccf3f
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: "eu-north-1"
           
       - name: Prepare Website Directory
         run: |
