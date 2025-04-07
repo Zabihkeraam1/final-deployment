@@ -78,10 +78,6 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
-provider "aws" {
-  region = "us-east-1"
-
-}
 
 # Create S3 Bucket for Static Files
 resource "aws_s3_bucket" "frontend_bucket" {
