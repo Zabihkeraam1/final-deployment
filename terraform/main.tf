@@ -200,3 +200,7 @@ output "cloudfront_distribution_id" {
 output "s3_bucket_name" {
   value = aws_s3_bucket.frontend_bucket.bucket
 }
+
+output "apprunner_service_url" {
+  value       = aws_apprunner_service.backend_service.service_url
+}
