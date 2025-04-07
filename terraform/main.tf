@@ -190,10 +190,6 @@ resource "aws_apprunner_service" "backend_service" {
     healthy_threshold   = 3
     unhealthy_threshold = 5
   }
-  tags = {
-    Environment = "production"
-    App         = "backend"
-  }
 
   depends_on = [
     aws_cloudfront_distribution.cdn,
