@@ -22,58 +22,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_apprunner_service" "backend_service" {
-  service_name = "new-monorepo-backend-service"
-
-  source_configuration {
-    authentication_configuration {
-      connection_arn = "arn:aws:apprunner:us-east-1:135808921133:connection/final-connection/27501aaad1774b7fb1ef0f052af53a92"
-    }
-
-    auto_deployments_enabled = true
-
-    code_repository {
-      repository_url = "https://github.com/Zabihkeraam1/final-deployment.git"
-      source_code_version {
-        type  = "BRANCH"
-        value = "master"
-      }
-
-      code_configuration {
-        configuration_source = "API"
-        code_configuration_values {
-          runtime        = "NODEJS_18"
-          build_command = "npm --prefix ./Backend install --production"
-          start_command = "node ./Backend/server.js" 
-          port           = 8080
-        }
-      }
-    }
-  }
-
-  instance_configuration {
-    cpu               = "1024"
-    memory            = "2048"
-  }
-
-  tags = {
-    Environment = "production"
-    App         = "backend"
-  }
-
-  health_check_configuration {
-    protocol            = "HTTP"
-    path                = "/health"
-    interval            = 10
-    timeout             = 5
-    healthy_threshold   = 3
-    unhealthy_threshold = 5
-  }
-}
-
-
-
-
 resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
@@ -187,6 +135,70 @@ resource "aws_cloudfront_distribution" "cdn" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+}
+
+
+resource "aws_apprunner_service" "backend_service" {
+  service_name = "new-monorepo-backend-service"
+
+  source_configuration {
+    authentication_configuration {
+      connection_arn = "arn:aws:apprunner:us-east-1:135808921133:connection/final-connection/27501aaad1774b7fb1ef0f052af53a92"
+    }
+
+    auto_deployments_enabled = true
+
+    code_repository {
+      repository_url = "https://github.com/Zabihkeraam1/final-deployment.git"
+      source_code_version {
+        type  = "BRANCH"
+        value = "master"
+      }
+
+      code_configuration {
+        configuration_source = "API"
+        code_configuration_values {
+          runtime        = "NODEJS_18"
+          build_command = "npm --prefix ./Backend install --production"
+          start_command = "node ./Backend/server.js" 
+          port           = 8080
+          environment_variables = {
+            NODE_ENV        = "production"
+            CLOUDFRONT_URL  = aws_cloudfront_distribution.cdn.domain_name
+            S3_BUCKET_NAME  = aws_s3_bucket.frontend_bucket.bucket
+          }
+        }
+      }
+    }
+  }
+
+  instance_configuration {
+    cpu               = "1024"
+    memory            = "2048"
+  }
+
+  tags = {
+    Environment = "production"
+    App         = "backend"
+  }
+
+  health_check_configuration {
+    protocol            = "HTTP"
+    path                = "/health"
+    interval            = 10
+    timeout             = 5
+    healthy_threshold   = 3
+    unhealthy_threshold = 5
+  }
+  tags = {
+    Environment = "production"
+    App         = "backend"
+  }
+
+  depends_on = [
+    aws_cloudfront_distribution.cdn,
+    aws_s3_bucket.frontend_bucket
+  ]
 }
 
 # Output CloudFront URL and Distribution ID
