@@ -3,7 +3,7 @@ on:
   push:
     branches: [ "master" ]
     paths: 
-      - "frontend/**"
+      - "Frontend/**"
 
 jobs:
   deploy-frontend:
