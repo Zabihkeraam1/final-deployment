@@ -143,7 +143,7 @@ resource "aws_apprunner_service" "backend_service" {
 
   source_configuration {
     authentication_configuration {
-      connection_arn = "arn:aws:apprunner:us-east-1:135808921133:connection/final-connection/27501aaad1774b7fb1ef0f052af53a92"
+      connection_arn = "arn:aws:apprunner:us-east-1:135808921133:connection/new-connection/45c0ab0285b64f8abd68e04dde58f1ff"
     }
 
     auto_deployments_enabled = true
