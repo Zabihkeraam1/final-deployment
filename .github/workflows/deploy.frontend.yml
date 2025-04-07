@@ -1,9 +1,15 @@
-name: Deploy Apps
+name: Deploy Frontend
+
 on:
   push:
     branches: [ "master" ]
     paths: 
       - "Frontend/**"
+
+  workflow_run:
+    workflows: ["Deploy Infrastructure"]
+    types:
+      - completed
 
 jobs:
   deploy-frontend:
