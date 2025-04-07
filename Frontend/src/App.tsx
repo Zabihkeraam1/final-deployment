@@ -18,9 +18,6 @@ function App() {
         <button onClick={handleClick}>
           Send request
         </button>
-        <button onClick={handleClick}>
-          Send request
-        </button>
         <p>
           {response}
         </p>
