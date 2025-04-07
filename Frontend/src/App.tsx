@@ -21,9 +21,6 @@ function App() {
         <p>
           {response}
         </p>
-        <p>
-          {response}
-        </p>
       </div>
     </>
   )
