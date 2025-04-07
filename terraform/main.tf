@@ -147,11 +147,6 @@ resource "aws_apprunner_service" "backend_service" {
     }
 
     auto_deployments_enabled = true
-          environment_variables = {
-            NODE_ENV        = "production"
-            CLOUDFRONT_URL  = aws_cloudfront_distribution.cdn.domain_name
-            S3_BUCKET_NAME  = aws_s3_bucket.frontend_bucket.bucket
-          }
 
     code_repository {
       repository_url = "https://github.com/Zabihkeraam1/final-deployment.git"
@@ -167,6 +162,11 @@ resource "aws_apprunner_service" "backend_service" {
           build_command = "npm --prefix ./Backend install --production"
           start_command = "node ./Backend/server.js" 
           port           = 8080
+          runtime_environment_variables = {
+            NODE_ENV        = "production"
+            CLOUDFRONT_URL  = aws_cloudfront_distribution.cdn.domain_name
+            S3_BUCKET_NAME  = aws_s3_bucket.frontend_bucket.bucket
+          }
         }
       }
     }
