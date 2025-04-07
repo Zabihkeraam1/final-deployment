@@ -41,3 +41,17 @@ jobs:
           TF_VAR_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           TF_VAR_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           TF_VAR_website_files_path: ${{ github.workspace }}/website
+          
+      - name: Store Outputs in SSM
+        run: |
+          cd ./terraform
+          # Get raw outputs without quotes
+          S3_BUCKET=$(terraform output s3_bucket_name | grep -oE '".*"' | tr -d '"' | head -1)
+          CF_ID=$(terraform output cloudfront_distribution_id | grep -oE '".*"' | tr -d '"' | head -1)
+
+          echo "Stored S3 Bucket: $S3_BUCKET"
+          echo "Stored CloudFront ID: $CF_ID"
+          aws ssm put-parameter --name "/app/s3-bucket" --value "$S3_BUCKET" --type String --overwrite
+          aws ssm put-parameter --name "/app/cf-id" --value "$CF_ID" --type String --overwrite
+          echo "Stored S3 Bucket: $S3_BUCKET"
+          echo "Stored CloudFront ID: $CF_ID"
