@@ -7,7 +7,7 @@ function App() {
   const handleClick = (e:React.FormEvent)=>{
     e.preventDefault()
     console.log('Button clicked: ', import.meta.env.VITE_API_URL)
-    axios.get(import.meta.env.VITE_API_URL).then(res=>{
+    axios.get(`${import.meta.env.VITE_API_URL}/api`).then(res=>{
       setResponse(res.data.message)
     })
     console.log(response)
