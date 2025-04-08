@@ -26,3 +26,8 @@ variable "region" {
   default     = "us-east-1"
   description = "AWS region"
 }
+
+variable "repository_url" {
+  type        = string
+  description = "GitHub repository URL for the backend service"
+}
