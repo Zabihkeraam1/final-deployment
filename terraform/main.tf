@@ -98,6 +98,18 @@ resource "aws_cloudfront_distribution" "cdn" {
       origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
     }
   }
+  # App Runner Origin
+  origin {
+    domain_name = aws_apprunner_service.backend_service.service_url
+    origin_id   = "AppRunnerOrigin"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "https-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
 
   enabled             = true
   default_root_object = "index.html"
@@ -118,6 +130,27 @@ resource "aws_cloudfront_distribution" "cdn" {
     min_ttl                = 0
     default_ttl            = 3600
     max_ttl                = 86400
+  }
+    # Custom behavior → App Runner for /api/*
+  ordered_cache_behavior {
+    path_pattern     = "/api/*"
+    target_origin_id = "AppRunnerOrigin"
+    
+    allowed_methods  = ["GET", "HEAD", "OPTIONS", "PUT", "POST", "PATCH", "DELETE"]
+    cached_methods   = ["GET", "HEAD"]
+    viewer_protocol_policy = "redirect-to-https"
+
+    forwarded_values {
+      query_string = true
+      headers      = ["*"]
+      cookies {
+        forward = "all"
+      }
+    }
+
+    min_ttl     = 0
+    default_ttl = 0
+    max_ttl     = 0
   }
 
   restrictions {
