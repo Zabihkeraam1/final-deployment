@@ -162,6 +162,9 @@ resource "aws_cloudfront_distribution" "cdn" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+  depends_on = [
+    aws_s3_bucket.frontend_bucket,
+  ]
 }
 
 # _____________________Creating App-runner___________________
