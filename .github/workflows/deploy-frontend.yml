@@ -5,6 +5,7 @@ on:
     branches: [ "master" ]
     paths: 
       - "Frontend/**"
+      - '.github/workflows/deploy-frontend.yml'
 
   workflow_run:
     workflows: ["Deploy Infrastructure"]
@@ -47,7 +48,7 @@ jobs:
         run: |
           cd Frontend
           npm ci
-          $env:VITE_API_URL=$APPRUNNER_URL; npm run build
+          VITE_API_URL=$APPRUNNER_URL npm run build
 
       - name: Deploy to S3
         run: |
