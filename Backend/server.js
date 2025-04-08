@@ -1,37 +1,38 @@
-// const {app} = require('./app.js');
-// const connectDB = require('./dbconnection.js');
-// const PORT = process.env.PORT || 8080;
-// // connectDB()
-// app.listen(PORT, '0.0.0.0', () => {
-//   console.log(`Server running on ${PORT}`);
-// });
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
 
-const http = require('http');
+const app = express();
 const port = process.env.PORT || 8080;
 
-// Create simple HTTP server
-const server = http.createServer((req, res) => {
-  // Health check endpoint
-  if (req.url === '/health') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('OK');
-    return;
-  }
+// Configure CORS options
+const corsOptions = {
+  origin: process.env.FRONTEND_DOMAIN, // Fixed typo (was FRONTEND_DOMAIN)
+  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+};
 
-  // Default response
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('🚀 Deployment Successful again and again!');
+// Middleware
+app.use(cors(corsOptions));
+
+// Routes
+app.get('/api', (req, res) => {
+  res.json({ message: 'Hello from the backend!' });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).send('OK');
+});
+
+app.get('/', (req, res) => {
+  res.json({ 
+    message: '🚀 Deployment Successful again and again!',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Start server
-server.listen(port, '0.0.0.0', () => {
+app.listen(port, '0.0.0.0', () => {
   console.log(`Server running at http://0.0.0.0:${port}`);
-});
-
-// Handle shutdown gracefully
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  server.close(() => {
-    console.log('HTTP server closed');
-  });
+  console.log(`Allowed frontend domain: ${process.env.FRONTEND_DOMAIN}`);
 });
