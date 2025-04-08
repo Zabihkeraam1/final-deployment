@@ -7,7 +7,15 @@ function App() {
   const handleClick = (e:React.FormEvent)=>{
     e.preventDefault()
     console.log('Button clicked: ', import.meta.env.VITE_API_URL)
-    axios.get(`${import.meta.env.VITE_API_URL}/api`).then(res=>{
+    axios.get(`https://${import.meta.env.VITE_API_URL}/api`).then(res=>{
+      setResponse(res.data.message)
+    })
+    console.log(response)
+  }
+  const send = (e:React.FormEvent)=>{
+    e.preventDefault()
+    console.log('Button clicked: ', import.meta.env.VITE_API_URL)
+    axios.get("https://d38re46utdbu32.cloudfront.net/api").then(res=>{
       setResponse(res.data.message)
     })
     console.log(response)
@@ -18,6 +26,9 @@ function App() {
       <div className="card">
         <button onClick={handleClick}>
           Send request
+        </button>
+        <button onClick={send}>
+          Send
         </button>
         <p>
           {response}
