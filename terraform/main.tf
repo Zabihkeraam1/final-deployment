@@ -164,7 +164,7 @@ resource "aws_apprunner_service" "backend_service" {
           port           = 8080
           runtime_environment_variables = {
             NODE_ENV        = "production"
-            CLOUDFRONT_URL  = aws_cloudfront_distribution.cdn.domain_name
+            FRONTEND_DOMAIN  = aws_cloudfront_distribution.cdn.domain_name
             S3_BUCKET_NAME  = aws_s3_bucket.frontend_bucket.bucket
           }
         }
