@@ -29,11 +29,13 @@ jobs:
         run: |
           echo "S3_BUCKET=$(aws ssm get-parameter --name '/app/s3-bucket' --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
           echo "CF_ID=$(aws ssm get-parameter --name '/app/cf-id' --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+          echo "APPRUNNER_URL=$(aws ssm get-parameter --name '/app/apprunner_url' --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
 
       - name: Debug Terraform Outputs
         run: |
           echo "S3_BUCKET_NAME: $S3_BUCKET"
           echo "CloudFront Distribution ID: $CF_ID"
+          echo "App-runner url: $APPRUNNER_URL"
 
       - name: Configure AWS CLI
         run: |
@@ -45,7 +47,7 @@ jobs:
         run: |
           cd Frontend
           npm ci
-          npm run build
+          $env:VITE_API_URL=$APPRUNNER_URL; npm run build
 
       - name: Deploy to S3
         run: |
