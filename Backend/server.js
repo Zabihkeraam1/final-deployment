@@ -5,14 +5,13 @@ const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 8080;
 
-// Configure CORS options
-const corsOptions = {
-  origin: process.env.FRONTEND_DOMAIN, // Fixed typo (was FRONTEND_DOMAIN)
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
 // Middleware
-app.use(cors(corsOptions));
+app.use(cors({
+    origin: process.env.FRONTEND_DOMAIN,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+  }));
 
 // Routes
 app.get('/api', (req, res) => {
@@ -27,7 +26,8 @@ app.get('/', (req, res) => {
   res.json({ 
     message: '🚀 Deployment Successful again and again!',
     status: 'running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    origin: process.env.FRONTEND_DOMAIN
   });
 });
 
