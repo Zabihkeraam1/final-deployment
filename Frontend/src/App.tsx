@@ -6,7 +6,8 @@ function App() {
   const [response, setResponse] = useState('')
   const handleClick = (e:React.FormEvent)=>{
     e.preventDefault()
-    axios.get('https://dpy9haeeaz.eu-west-3.awsapprunner.com/api').then(res=>{
+    console.log('Button clicked: ', import.meta.env.VITE_API_URL)
+    axios.get(import.meta.env.VITE_API_URL).then(res=>{
       setResponse(res.data.message)
     })
     console.log(response)
