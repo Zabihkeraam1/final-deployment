@@ -3,8 +3,8 @@ on:
   push:
     branches: [ "master" ]
     paths:
-    - 'terraform/**'  # Only run when Terraform files change
-    - '.github/workflows/deploy-infrastructure.yml'  # Or when this workflow changes
+    - 'terraform/**'
+    - '.github/workflows/deploy-infrastructure.yml'
 
 jobs:
   terraform:
