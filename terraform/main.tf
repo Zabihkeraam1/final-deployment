@@ -1,13 +1,3 @@
-variable "customer_name" {
-  type        = string
-  description = "Name of the customer"
-}
-
-variable "app_image" {
-  type        = string
-  description = "Docker image (not used if deploying from source)"
-}
-
 terraform {
   required_providers {
     aws = {
@@ -26,11 +16,15 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
-
+# _____________________Creating s3 bucket___________________
 # Create S3 Bucket for Static Files
 resource "aws_s3_bucket" "frontend_bucket" {
-  bucket = "my-project-frontend-${random_id.bucket_suffix.hex}"
+  bucket = "${var.project}-${var.region}-frontend-${random_id.bucket_suffix.hex}"
   force_destroy = true
+    tags = {
+    Name        = "${var.project}-frontend-bucket"
+    Project     = var.project
+  }
 }
 
 # Modern versioning configuration
@@ -93,7 +87,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
     ]
   })
 }
-
+# _____________________Creating CloudFront Distribution___________________
 # CloudFront Distribution
 resource "aws_cloudfront_distribution" "cdn" {
   origin {
@@ -137,9 +131,9 @@ resource "aws_cloudfront_distribution" "cdn" {
   }
 }
 
-
+# _____________________Creating App-runner___________________
 resource "aws_apprunner_service" "backend_service" {
-  service_name = "new-monorepo-backend-service"
+  service_name = "${var.project}-backend-${random_id.bucket_suffix.hex}"
 
   source_configuration {
     authentication_configuration {
@@ -149,7 +143,7 @@ resource "aws_apprunner_service" "backend_service" {
     auto_deployments_enabled = true
 
     code_repository {
-      repository_url = "https://github.com/Zabihkeraam1/final-deployment.git"
+      repository_url = var.repository_url
       source_code_version {
         type  = "BRANCH"
         value = "master"
@@ -177,9 +171,10 @@ resource "aws_apprunner_service" "backend_service" {
     memory            = "2048"
   }
 
-  tags = {
+    tags = {
+    Name        = "${var.project}--backend"
+    Project     = var.project
     Environment = "production"
-    App         = "backend"
   }
 
   health_check_configuration {
