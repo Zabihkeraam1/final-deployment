@@ -134,6 +134,35 @@ resource "aws_cloudfront_distribution" "cdn" {
   ]
 }
 
+# _____________________Creating RDS-database___________________
+# Get the default security group for your VPC
+data "aws_security_group" "default" {
+  name   = "default"
+  vpc_id = "vpc-0297cd44f118eae2f"  # Replace with your actual VPC ID
+}
+
+resource "aws_db_instance" "my_database" {
+  identifier             = "${var.project}-${var.region}-database-${random_id.bucket_suffix.hex}"
+  engine                 = "postgres"
+  engine_version         = "15"
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  max_allocated_storage  = 100
+  storage_type           = "gp3"
+  db_name                = var.project
+  username               = "postgres"
+  password               = var.db_password
+  parameter_group_name   = "default.postgres15"
+  skip_final_snapshot    = true
+  publicly_accessible    = true  # Changed to true for public access
+  vpc_security_group_ids = [data.aws_security_group.default.id]
+  multi_az               = false
+  tags = {
+    Name = "${var.project}-database"
+  }
+
+}
+
 # _____________________Creating App-runner___________________
 resource "aws_apprunner_service" "backend_service" {
   service_name = "${var.project}-backend-${random_id.bucket_suffix.hex}"
@@ -163,6 +192,12 @@ resource "aws_apprunner_service" "backend_service" {
             NODE_ENV        = "production"
             FRONTEND_DOMAIN  = aws_cloudfront_distribution.cdn.domain_name
             S3_BUCKET_NAME  = aws_s3_bucket.frontend_bucket.bucket
+            DB_USER           = aws_db_instance.my_database.username
+            DB_PASSWORD       = aws_db_instance.my_database.password
+            DB_HOST           = aws_db_instance.my_database.address
+            DB_NAME           = aws_db_instance.my_database.name
+            DB_PORT           = "5432"
+            DB_SSL            = "true" # Always use SSL with public RDS
           }
         }
       }
@@ -191,7 +226,8 @@ resource "aws_apprunner_service" "backend_service" {
 
   depends_on = [
     aws_cloudfront_distribution.cdn,
-    aws_s3_bucket.frontend_bucket
+    aws_s3_bucket.frontend_bucket,
+    aws_db_instance.my_database
   ]
 }
 
@@ -209,4 +245,12 @@ output "s3_bucket_name" {
 
 output "apprunner_service_url" {
   value       = aws_apprunner_service.backend_service.service_url
+}
+
+output "rds_endpoint" {
+  value = aws_db_instance.my_database.endpoint
+}
+
+output "rds_username" {
+  value = aws_db_instance.my_database.username
 }
