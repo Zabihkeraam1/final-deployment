@@ -31,3 +31,9 @@ variable "repository_url" {
   type        = string
   description = "GitHub repository URL for the backend service"
 }
+
+variable "db_password" {
+  description = "Password for the database admin user"
+  type        = string
+  sensitive   = true
+}
