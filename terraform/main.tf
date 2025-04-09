@@ -193,9 +193,9 @@ resource "aws_apprunner_service" "backend_service" {
             FRONTEND_DOMAIN  = aws_cloudfront_distribution.cdn.domain_name
             S3_BUCKET_NAME  = aws_s3_bucket.frontend_bucket.bucket
             DB_USER           = aws_db_instance.my_database.username
-            DB_PASSWORD       = aws_db_instance.my_database.password
+            DB_PASSWORD       = var.db_password
             DB_HOST           = aws_db_instance.my_database.address
-            DB_NAME           = aws_db_instance.my_database.name
+            DB_NAME           = aws_db_instance.my_database.db_name
             DB_PORT           = "5432"
             DB_SSL            = "true" # Always use SSL with public RDS
           }
