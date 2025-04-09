@@ -1,10 +1,14 @@
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
-dotenv.config('.env')
-const MongoDbURI = process.env.MONGODB_URI
-const connectDB = () =>{ mongoose.connect(MongoDbURI).then(()=>{
-    console.log("Connected to MongoDB")
+const { Pool } = require('pg');
+require('dotenv').config('.env');
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+  ssl: {
+    rejectUnauthorized: false, // Optional for local dev; remove in prod
+  },
 });
-}
 
-module.exports = connectDB;
+module.exports = pool;
