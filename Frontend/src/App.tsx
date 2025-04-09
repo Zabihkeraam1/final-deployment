@@ -15,8 +15,9 @@ function App() {
   const send = (e:React.FormEvent)=>{
     e.preventDefault()
     console.log('Button clicked: ', import.meta.env.VITE_API_URL)
-    axios.get("https://d38re46utdbu32.cloudfront.net/api").then(res=>{
+    axios.get("https://d38re46utdbu32.cloudfront.net/data").then(res=>{
       setResponse(res.data.message)
+      console.log('Database data: ', res.data)
     })
     console.log(response)
   }
@@ -28,7 +29,7 @@ function App() {
           Send request
         </button>
         <button onClick={send}>
-          Send
+          Call Database
         </button>
         <p>
           {response}
