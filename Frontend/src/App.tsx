@@ -15,7 +15,7 @@ function App() {
   const send = (e:React.FormEvent)=>{
     e.preventDefault()
     console.log('Button clicked: ', import.meta.env.VITE_API_URL)
-    axios.get("https://d38re46utdbu32.cloudfront.net/data").then(res=>{
+    axios.get(`https://${import.meta.env.VITE_API_URL}/data`).then(res=>{
       setResponse(res.data.message)
       console.log('Database data: ', res.data)
     })
